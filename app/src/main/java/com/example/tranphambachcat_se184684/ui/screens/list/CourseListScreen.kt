@@ -27,12 +27,13 @@ fun CourseListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("SkillVerse Courses") },
+                title = { Text("SkillVerse Courses", color = androidx.compose.ui.graphics.Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = androidx.compose.ui.graphics.Color(0x1AFFFFFF),  // Glass morphism
+                    titleContentColor = androidx.compose.ui.graphics.Color.White
                 )
             )
         }

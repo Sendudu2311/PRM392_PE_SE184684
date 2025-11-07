@@ -8,13 +8,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.tranphambachcat_se184684.ui.components.GalaxyBackground
 import com.example.tranphambachcat_se184684.ui.screens.detail.CourseDetailScreen
 import com.example.tranphambachcat_se184684.ui.screens.favorites.FavoritesScreen
 import com.example.tranphambachcat_se184684.ui.screens.list.CourseListScreen
@@ -26,64 +27,84 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    Scaffold(
-        bottomBar = {
-            if (currentRoute != null && !currentRoute.startsWith("course_detail")) {
-                NavigationBar {
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Courses") },
-                        label = { Text("Courses") },
-                        selected = currentRoute == Screen.CourseList.route,
-                        onClick = {
-                            navController.navigate(Screen.CourseList.route) {
-                                popUpTo(Screen.CourseList.route) { inclusive = true }
+    GalaxyBackground {
+        Scaffold(
+            containerColor = Color.Transparent,  // Make scaffold transparent
+            bottomBar = {
+                if (currentRoute != null && !currentRoute.startsWith("course_detail")) {
+                    NavigationBar(
+                        containerColor = Color(0x1AFFFFFF),  // Glass morphism
+                        contentColor = Color.White
+                    ) {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Home, contentDescription = "Courses") },
+                            label = { Text("Courses") },
+                            selected = currentRoute == Screen.CourseList.route,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF6366F1),
+                                selectedTextColor = Color.White,
+                                unselectedIconColor = Color(0xFF94A3B8),
+                                unselectedTextColor = Color(0xFF94A3B8),
+                                indicatorColor = Color(0x336366F1)
+                            ),
+                            onClick = {
+                                navController.navigate(Screen.CourseList.route) {
+                                    popUpTo(Screen.CourseList.route) { inclusive = true }
+                                }
                             }
-                        }
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
-                        label = { Text("Favorites") },
-                        selected = currentRoute == Screen.Favorites.route,
-                        onClick = {
-                            navController.navigate(Screen.Favorites.route) {
-                                popUpTo(Screen.CourseList.route)
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Favorite, contentDescription = "Favorites") },
+                            label = { Text("Favorites") },
+                            selected = currentRoute == Screen.Favorites.route,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF8B5CF6),
+                                selectedTextColor = Color.White,
+                                unselectedIconColor = Color(0xFF94A3B8),
+                                unselectedTextColor = Color(0xFF94A3B8),
+                                indicatorColor = Color(0x338B5CF6)
+                            ),
+                            onClick = {
+                                navController.navigate(Screen.Favorites.route) {
+                                    popUpTo(Screen.CourseList.route)
+                                }
                             }
+                        )
+                    }
+                }
+            }
+        ) { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = Screen.CourseList.route,
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                composable(Screen.CourseList.route) {
+                    CourseListScreen(
+                        onCourseClick = { courseId ->
+                            navController.navigate(Screen.CourseDetail.createRoute(courseId))
                         }
                     )
                 }
-            }
-        }
-    ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.CourseList.route,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable(Screen.CourseList.route) {
-                CourseListScreen(
-                    onCourseClick = { courseId ->
-                        navController.navigate(Screen.CourseDetail.createRoute(courseId))
-                    }
-                )
-            }
 
-            composable(
-                route = Screen.CourseDetail.route,
-                arguments = listOf(
-                    navArgument("courseId") { type = NavType.LongType }
-                )
-            ) {
-                CourseDetailScreen(
-                    onBackClick = { navController.navigateUp() }
-                )
-            }
+                composable(
+                    route = Screen.CourseDetail.route,
+                    arguments = listOf(
+                        navArgument("courseId") { type = NavType.LongType }
+                    )
+                ) {
+                    CourseDetailScreen(
+                        onBackClick = { navController.navigateUp() }
+                    )
+                }
 
-            composable(Screen.Favorites.route) {
-                FavoritesScreen(
-                    onCourseClick = { courseId ->
-                        navController.navigate(Screen.CourseDetail.createRoute(courseId))
-                    }
-                )
+                composable(Screen.Favorites.route) {
+                    FavoritesScreen(
+                        onCourseClick = { courseId ->
+                            navController.navigate(Screen.CourseDetail.createRoute(courseId))
+                        }
+                    )
+                }
             }
         }
     }

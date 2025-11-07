@@ -3,9 +3,8 @@ package com.example.tranphambachcat_se184684.data.repository
 import android.util.Log
 import com.example.tranphambachcat_se184684.data.local.CourseDao
 import com.example.tranphambachcat_se184684.data.local.FavoriteDao
-import com.example.tranphambachcat_se184684.data.model.Course
-import com.example.tranphambachcat_se184684.data.model.CourseDetail
-import com.example.tranphambachcat_se184684.data.model.Favorite
+import com.example.tranphambachcat_se184684.data.local.ModuleDao
+import com.example.tranphambachcat_se184684.data.model.*
 import com.example.tranphambachcat_se184684.data.remote.CourseApiService
 import com.example.tranphambachcat_se184684.util.Resource
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +20,8 @@ import javax.inject.Singleton
 class CourseRepository @Inject constructor(
     private val apiService: CourseApiService,
     private val courseDao: CourseDao,
-    private val favoriteDao: FavoriteDao
+    private val favoriteDao: FavoriteDao,
+    private val moduleDao: ModuleDao
 ) {
 
     /**
@@ -109,17 +109,23 @@ class CourseRepository @Inject constructor(
     }
 
     /**
-     * Get course detail by ID
+     * Get course detail by ID with modules
      */
     fun getCourseById(courseId: Long): Flow<Resource<CourseDetail>> = flow {
         Log.d(TAG, "🔍 getCourseById($courseId) called")
         emit(Resource.Loading())
 
-        // Try to get from cache first
+        // Try to get from cache first (with modules)
         val cachedCourse = courseDao.getCourseById(courseId)
         if (cachedCourse != null) {
             Log.d(TAG, "📦 Found course in cache: ${cachedCourse.title}")
-            // Convert to CourseDetail (simplified)
+            Log.d(TAG, "📦 Cached description: ${cachedCourse.description?.take(100) ?: "NULL"}")
+
+            // Load modules from cache
+            val cachedModules = moduleDao.getModulesByCourseIdSync(courseId)
+            Log.d(TAG, "📦 Loaded ${cachedModules.size} modules from cache")
+
+            // Convert to CourseDetail with modules
             val detail = CourseDetail(
                 id = cachedCourse.id,
                 title = cachedCourse.title,
@@ -134,7 +140,10 @@ class CourseRepository @Inject constructor(
                 createdAt = cachedCourse.createdAt,
                 updatedAt = cachedCourse.updatedAt,
                 publishedDate = cachedCourse.publishedDate,
-                isFavorite = cachedCourse.isFavorite
+                isFavorite = cachedCourse.isFavorite,
+                modules = cachedModules.map {
+                    Module(it.id, it.title, it.description, it.orderIndex)
+                }
             )
             emit(Resource.Success(detail))
         }
@@ -149,20 +158,30 @@ class CourseRepository @Inject constructor(
             val isFavorite = favoriteDao.isFavorite(courseId)
             courseDetail.isFavorite = isFavorite
 
-            // Update cache
-            courseDao.insertCourse(courseDetail.toCourse(isFavorite))
+            // Update cache - save course with description
+            val courseToSave = courseDetail.toCourse(isFavorite)
+            Log.d(TAG, "💾 Saving course to database:")
+            Log.d(TAG, "   - Title: ${courseToSave.title}")
+            Log.d(TAG, "   - Description: ${courseToSave.description?.take(100) ?: "NULL"}")
+            Log.d(TAG, "   - Level: ${courseToSave.level}")
+            courseDao.insertCourse(courseToSave)
+
+            // Save modules to database
+            courseDetail.modules?.let { modules ->
+                Log.d(TAG, "💾 Saving ${modules.size} modules to database...")
+                moduleDao.deleteModulesByCourseId(courseId) // Delete old modules first
+                val moduleEntities = modules.map { it.toEntity(courseId) }
+                moduleDao.insertModules(moduleEntities)
+                Log.d(TAG, "✅ Modules saved successfully")
+            }
 
             emit(Resource.Success(courseDetail))
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to fetch course detail: ${e.message}")
             if (cachedCourse == null) {
                 emit(Resource.Error("Failed to load course: ${e.message}"))
-            } else {
-                emit(Resource.Error(
-                    message = "Network error: ${e.message}. Showing cached data.",
-                    data = null
-                ))
             }
+            // If cachedCourse exists, we already emitted it above
         }
     }
 

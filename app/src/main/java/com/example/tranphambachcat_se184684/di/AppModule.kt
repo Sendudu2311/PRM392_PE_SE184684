@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.example.tranphambachcat_se184684.data.local.CourseDao
 import com.example.tranphambachcat_se184684.data.local.CourseDatabase
 import com.example.tranphambachcat_se184684.data.local.FavoriteDao
+import com.example.tranphambachcat_se184684.data.local.ModuleDao
 import com.example.tranphambachcat_se184684.data.remote.CourseApiService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -117,5 +118,11 @@ object AppModule {
     @Singleton
     fun provideFavoriteDao(database: CourseDatabase): FavoriteDao {
         return database.favoriteDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideModuleDao(database: CourseDatabase): ModuleDao {
+        return database.moduleDao()
     }
 }

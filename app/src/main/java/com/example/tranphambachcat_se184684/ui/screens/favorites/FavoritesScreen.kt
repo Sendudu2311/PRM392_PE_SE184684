@@ -26,12 +26,13 @@ fun FavoritesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("My Favorites") },
+                title = { Text("My Favorites", color = androidx.compose.ui.graphics.Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = androidx.compose.ui.graphics.Color(0x1AFFFFFF),
+                    titleContentColor = androidx.compose.ui.graphics.Color.White
                 )
             )
         }
